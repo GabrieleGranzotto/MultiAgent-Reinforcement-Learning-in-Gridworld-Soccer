@@ -1,69 +1,120 @@
+import json, tqdm
 import numpy as np
+from time import datetime
 
-class FootballEnv:
-    def __init__(self, width = 5, height = 4):
-        self.width = width
-        self.height = height
-        # Initialize the state of the environment
-        self.reset()
+from src.agents import BeliefLearner, RandomAgent
+from src.environment import FootballEnv
 
-    def action(self, actionA, actionB):
-        action_dict = {
-            "N": (-1, 0),
-            "S": (1, 0),
-            "E": (0, 1),
-            "W": (0, -1),
-            "0": (0, 0)
+
+def save_results_in_json(results):
+    filename = f"results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    with open(filename, "w") as f:
+        json.dump(results, f, indent=4)
+
+def train_agents(playerA, playerB, env, num_episodes=1_000_000):
+    state = env.reset()
+    for step in tqdm(range(num_episodes), desc="Training Progress", unit="episode"):
+        actionA = playerA.choose_action(state)
+        actionB = playerB.choose_action(state)
+        next_state, rewardA, rewardB, done = env.action(actionA, actionB)
+        playerA.update(state, actionA, actionB, rewardA, rewardB, next_state, done)
+        playerB.update(state, actionB, actionA, rewardB, rewardA, next_state, done)
+        
+        ALPHA_DECAY = 0.9999954  # Decay factor for the learning rate
+        playerA.alpha = playerA.alpha * ALPHA_DECAY  # Decay the learning rate
+        playerB.alpha = playerB.alpha * ALPHA_DECAY  # Decay the learning rate
+        if done:
+            state = env.reset()  # Reset the environment for the next episode
+        else:
+            state = next_state
+
+def test_agents(playerA, playerB, env, num_episodes=100_000):
+    playerA.epsilon = 0.0  # Disable exploration for testing
+    playerB.epsilon = 0.0  # Disable exploration for testing
+    state = env.reset()
+    total_rewardA = 0
+    total_rewardB = 0
+    num_wins_A = 0
+    num_wins_B = 0
+    done_count = 0
+    for step in tqdm(range(num_episodes), desc="Testing Progress", unit="episode"):
+        actionA = playerA.choose_action(state)
+        actionB = playerB.choose_action(state)
+        next_state, rewardA, rewardB, done = env.action(actionA, actionB)
+        total_rewardA += rewardA
+        total_rewardB += rewardB
+        if rewardA > 0:
+            num_wins_A += 1
+        elif rewardB > 0:
+            num_wins_B += 1
+        if done:
+            done_count += 1
+            state = env.reset()  # Reset the environment for the next episode
+        else:
+            state = next_state
+    return done_count, total_rewardA, total_rewardB, num_wins_A, num_wins_B
+
+def main():
+    message = """
+    ======================================================================================
+    ** Multi-Agent Reinforcement Learning in Football Environment **
+    ======================================================================================
+    This program simulates a football environment where two agents, Player A and Player B, 
+    learn to play football using reinforcement learning techniques.
+    
+    List of the test:
+    1) Random Learning:    Belief Learner vs Random Agent
+    2) Identical Learning: Belief Learner vs Belief Learner"""
+    print(message)
+    np.random.seed(88)  # Set a random seed for reproducibility
+    env = FootballEnv(width=5, height=4)
+    print("======================================================================================")
+    print("* Starting training for Belief Learner vs Random Agent... *")
+    
+    playerA_vs_random = BeliefLearner()
+    random_agent = RandomAgent()
+    train_agents(playerA_vs_random, random_agent, env, num_episodes=1_000_000)
+    print("* Training completed for Belief Learner vs Random Agent. *")
+    print("======================================================================================")
+    print("* Starting testing for Belief Learner vs Random Agent... *")
+    done_count, total_rewardA, total_rewardB, num_wins_A, num_wins_B = test_agents(playerA_vs_random, random_agent, env, num_episodes=100_000)
+    perc_wins_A, perc_wins_B = (num_wins_A/done_count * 100, num_wins_B/done_count * 100) if done_count > 0 else (0, 0)
+    print(f"* Testing completed for Belief Learner vs Random Agent. *")
+    print(f"Match Played: {done_count}")
+    print(f"Total reward: Belief Learner vs Random Agent: {total_rewardA} vs {total_rewardB}")
+    print(f"Percentage of wins: Belief Learner vs Random Agent: {perc_wins_A:.2f}% vs {perc_wins_B:.2f}%")
+    results = {
+        "random": {
+            "n": done_count,
+            "rew_A": total_rewardA,
+            "rew_B": total_rewardB,
+            "%_A": perc_wins_A,
+            "%_B": perc_wins_B,
         }
-        pos_A, pos_B, _ = self.state
-        
-        if actionA in action_dict and actionB in action_dict:
-            new_pos_A = (pos_A[0] + action_dict[actionA][0], pos_A[1] + action_dict[actionA][1])
-            new_pos_B = (pos_B[0] + action_dict[actionB][0], pos_B[1] + action_dict[actionB][1])
-            new_pos = (new_pos_A, new_pos_B)
-        else:
-            raise ValueError("Invalid action. Please choose from 'N', 'S', 'E', 'W', or '0'.")
+    }
 
-        # Randomly choose which player gets to move first (0 for A, 1 for B)
-        coin_flip = np.random.choice([0, 1])
-        
-        # move the player with the ball first  
-        moving_order = [coin_flip, 1 - coin_flip]
-        for moving_player in moving_order:
-            reward_0, reward_1, done = self.__move_(moving_player, new_pos)
-            if done:
-                break  # Stop moving if a goal is scored
-        return tuple(self.state), reward_0, reward_1, done  # Return the state and the player who scored
+    playerA = BeliefLearner()
+    playerB = BeliefLearner()
+    print("======================================================================================")
+    print("* Starting training for Belief Learner vs Belief Learner... *")
+    train_agents(playerA, playerB, env, num_episodes=1_000_000)
+    print("* Training completed for Belief Learner vs Belief Learner. *")
+    print("======================================================================================")
+    print("* Starting testing for Belief Learner vs Belief Learner... *")
+    done_count, total_rewardA, total_rewardB, num_wins_A, num_wins_B = test_agents(playerA, playerB, env, num_episodes=100_000)
+    perc_wins_A, perc_wins_B = (num_wins_A/done_count * 100, num_wins_B/done_count * 100) if done_count > 0 else (0, 0)
+    print(f"* Testing completed for Belief Learner vs Belief Learner. *")
+    print(f"Match Played: {done_count}")
+    print(f"Total reward: Belief Learner vs Belief Learner: {total_rewardA} vs {total_rewardB}")
+    print(f"Percentage of wins: Belief Learner vs Belief Learner: {perc_wins_A:.2f}% vs {perc_wins_B:.2f}%")
+    results["identical"] = {
+        "n": done_count,
+        "rew_A": total_rewardA,
+        "rew_B": total_rewardB,
+        "%_A": perc_wins_A,
+        "%_B": perc_wins_B,
+    }
+    save_results_in_json(results)
 
-    def reset(self):
-        pos_A = (1, 3)
-        pos_B = (2, 1)
-        posses = np.random.choice([0, 1])  # Randomly assign the ball to one of the players
-        self.state = [pos_A, pos_B, posses]
-        return self.state
-
-    def __move_(self, player, new_pos):
-        # Randomly end the game with a 10% chance
-        if np.random.rand() < 0.1:
-            return tuple(self.state), 0, 0, True  # state, reward_A, reward_B, done
-        in_goal = False
-        _, _, posses = self.state
-        # if the new moving player's position is the same as the other player...
-        if new_pos[player] == self.state[1- player]:
-            # ...then the players stays in the same position...
-            self.state[2] = 1 - player # ...and the other player gets the ball
-        else:
-            in_bounds = new_pos[player][0] >= 0 and new_pos[player][0] < self.height \
-                            and new_pos[player][1] >= 0 and new_pos[player][1] < self.width
-            in_goal = (posses == player) and \
-                      ((posses == 0 and new_pos[player][1] == -1) or \
-                       (posses == 1 and new_pos[player][1] == self.width)) and \
-                      (new_pos[player][0] == self.height // 2 - 1 or new_pos[player][0] == self.height // 2)
-            if in_bounds:
-                # if the new position respect the bounds, the player change position...
-                self.state[player] = new_pos[player]    
-        reward = [0, 0]
-        if in_goal:
-            reward[player] = 1
-            reward[1 - player] = -1
-        return reward[0], reward[1], in_goal
+if __name__ == "__main__":
+    main()
