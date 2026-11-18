@@ -1,0 +1,26 @@
+% Requires \usepackage{booktabs} in your LaTeX preamble
+\begin{table}[htbp]
+    \centering
+    \caption{Per-Seed Breakdown of Match Outcomes and Net Rewards}
+    \label{tab:marl_per_seed}
+    \begin{tabular}{clccccc}
+        \toprule
+        \textbf{Seed} & \textbf{Condition} & \textbf{Matches} & \textbf{Win A (\%)} & \textbf{Win B (\%)} & \textbf{Draw (\%)} & \textbf{Reward A} \\
+        \midrule
+        10 & vs Random Agent & 17153 & 41.33 & 0.37 & 58.29 & 7026 \\
+        10 & Self-Play (Identical) & 16352 & 19.25 & 18.69 & 62.06 & 90 \\
+        \midrule
+        20 & vs Random Agent & 17412 & 42.28 & 0.35 & 57.37 & 7301 \\
+        20 & Self-Play (Identical) & 16714 & 23.80 & 17.37 & 58.82 & 1074 \\
+        \midrule
+        30 & vs Random Agent & 17438 & 41.67 & 0.35 & 57.98 & 7205 \\
+        30 & Self-Play (Identical) & 12765 & 5.33 & 14.86 & 79.81 & -1217 \\
+        \midrule
+        42 & vs Random Agent & 17253 & 41.49 & 0.28 & 58.22 & 7110 \\
+        42 & Self-Play (Identical) & 13556 & 16.68 & 9.99 & 73.33 & 907 \\
+        \midrule
+        88 & vs Random Agent & 17453 & 42.75 & 0.23 & 57.01 & 7421 \\
+        88 & Self-Play (Identical) & 15732 & 19.05 & 16.53 & 64.42 & 397 \\
+        \bottomrule
+    \end{tabular}
+\end{table}

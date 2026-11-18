@@ -1,0 +1,14 @@
+% Requires \usepackage{booktabs} in your LaTeX preamble
+\begin{table}[htbp]
+    \centering
+    \caption{Aggregated Multi-Seed Performance Comparison (Mean $\pm$ Std across seeds)}
+    \label{tab:marl_summary_comparison}
+    \begin{tabular}{lccccc}
+        \toprule
+        \textbf{Condition} & \textbf{Matches ($n$)} & \textbf{Win A (\%)} & \textbf{Win B (\%)} & \textbf{Draw (\%)} & \textbf{Net Reward A} \\
+        \midrule
+        vs Random Agent & 17341.8 $\pm$ 118.4 & 41.91 $\pm$ 0.53 & 0.32 $\pm$ 0.05 & 57.78 $\pm$ 0.50 & 7212.6 $\pm$ 139.0 \\
+        Self-Play (Identical) & 15023.8 $\pm$ 1573.5 & 16.82 $\pm$ 6.19 & 15.49 $\pm$ 3.02 & 67.69 $\pm$ 7.74 & 250.2 $\pm$ 813.6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}

@@ -1,0 +1,3 @@
+Condition,Seeds_Count,Matches_Mean,Matches_Std,Win_A_Mean,Win_A_Std,Win_B_Mean,Win_B_Std,Draw_Mean,Draw_Std,Reward_A_Mean,Reward_A_Std,Reward_B_Mean,Reward_B_Std
+vs Random Agent,5,17341.8000,118.3882,41.9063,0.5320,0.3184,0.0513,57.7752,0.5022,7212.6000,139.0318,-7212.6000,139.0318
+Self-Play (Identical),5,15023.8000,1573.4709,16.8204,6.1918,15.4891,3.0187,67.6905,7.7427,250.2000,813.6243,-250.2000,813.6243
