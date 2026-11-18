@@ -1,15 +1,25 @@
+from __future__ import annotations
 import numpy as np
 
 class BeliefLearner:
     """
     A reinforcement learning agent that learns to play football using Q-learning and belief tracking.
     """
-    def __init__(self):
+    def __init__(self, gamma: float = 1.0, rng: np.random.Generator | None = None):
+        """
+        Initialize the BeliefLearner agent.
+
+        Args:
+            gamma (float): The discount factor for future rewards.
+            rng (np.random.Generator | None): The random number generator to use.
+        """
         self.q_table = {}
         self.belief_traker = {}
         self.actions = {"0": 0, "N": 1, "S": 2, "E": 3, "W": 4}
         self.epsilon = 0.2 # Exploration rate
         self.alpha = 1.0 # Learning rate
+        self.gamma = gamma # Discount factor
+        self.rng = rng if rng is not None else np.random.default_rng()
 
     def _get_or_create_state(self, state):
         state_key = tuple(state)
@@ -28,9 +38,9 @@ class BeliefLearner:
             str: The chosen action for the agent.
         """
         state_key = self._get_or_create_state(state)
-        if np.random.rand() < self.epsilon:
+        if self.rng.random() < self.epsilon:
             # Exploration: choose a random action
-            my_action = np.random.choice(list(self.actions.keys()))
+            my_action = str(self.rng.choice(list(self.actions.keys())))
         else:
             # Exploitation: choose the best action based on Q-values
             q_values = self.q_table[state_key]
@@ -38,10 +48,11 @@ class BeliefLearner:
             belief = self.belief_traker[state_key]
             belief = belief / np.sum(belief)
             expected_values = np.dot(q_values, belief)  # Calculate expected values for each action
-            best_action_index = np.argmax(expected_values)
-            my_action = list(self.actions.keys())[best_action_index]         
+            max_val = np.max(expected_values)
+            best_action_index = int(self.rng.choice(np.flatnonzero(np.isclose(expected_values, max_val))))
+            my_action = list(self.actions.keys())[best_action_index]
         return my_action
-
+    
     def update(self, state: tuple, my_action: str, opp_action: str, my_reward: int, opp_reward: int, next_state: tuple, done: bool):
         """
         Update the Q-table and belief tracker based on the observed transition.
@@ -66,20 +77,29 @@ class BeliefLearner:
             belief_next = self.belief_traker[next_state_key]
             belief_next_prob = belief_next / np.sum(belief_next)
             expected_values_next = np.dot(q_values_next, belief_next_prob)
-            next_value = np.max(expected_values_next)
+            next_value = float(np.max(expected_values_next))
 
-        self.q_table[state_key][self.actions[my_action], self.actions[opp_action]] = \
-            (1.0-self.alpha)*self.q_table[state_key][self.actions[my_action], self.actions[opp_action]] + \
-            self.alpha * (my_reward + next_value)  # Update Q-value for the current state-action
+        a_idx = self.actions[my_action]
+        o_idx = self.actions[opp_action]
+
+        self.q_table[state_key][a_idx, o_idx] = (
+            (1.0 - self.alpha) * self.q_table[state_key][a_idx, o_idx]
+            + self.alpha * (my_reward + self.gamma * next_value)
+        )
+
+        # Update empirical count of opponent's action in the current state
+        self.belief_traker[state_key][o_idx] += 1.0
+
 
 class RandomAgent:
     """
     A simple agent that chooses actions randomly.
     """
-    def __init__(self):
+    def __init__(self, rng: np.random.Generator | None = None):
         self.actions = ["0", "N", "S", "E", "W"]
-        self.epsilon = 0.0  # Exploration rate (not used for RandomAgent)
-        self.alpha = 0.0  # Learning rate (not used for RandomAgent)
+        self.epsilon = 0.0  # Not used for RandomAgent
+        self.alpha = 0.0    # Not used for RandomAgent
+        self.rng = rng if rng is not None else np.random.default_rng()
 
     def choose_action(self, state: tuple) -> str:
         """

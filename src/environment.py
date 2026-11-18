@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 
 class FootballEnv:
@@ -5,10 +6,10 @@ class FootballEnv:
     A simple football environment for two players. 
     The environment is represented as a grid of specified width and height.
     """
-    def __init__(self, width = 5, height = 4):
+    def __init__(self, width: int = 5, height: int = 4, rng: np.random.Generator | None = None):
         self.width = width
         self.height = height
-        # Initialize the state of the environment
+        self.rng = rng if rng is not None else np.random.default_rng()
         self.reset()
 
     def action(self, actionA: str, actionB: str)-> tuple:
@@ -24,9 +25,9 @@ class FootballEnv:
             int: Reward for player B (1 if scored, -1 if conceded, 0 otherwise).
             bool: True if the game is over (goal scored), False otherwise.
         """
-        # Randomly end the game with a 10% chance
-        if np.random.rand() < 0.1:
-            return tuple(self.state), 0, 0, True  # state, reward_A, reward_B, done
+        # Randomly end the game with a 10% chance (induces effective discount factor gamma = 0.9)
+        if self.rng.random() < 0.1:
+            return tuple(self.state), 0, 0, True
         
         action_dict = {
             "N": (-1, 0),
@@ -44,17 +45,17 @@ class FootballEnv:
         else:
             raise ValueError("Invalid action. Please choose from 'N', 'S', 'E', 'W', or '0'.")
 
-        # Randomly choose which player gets to move first (0 for A, 1 for B)
-        coin_flip = np.random.choice([0, 1])
-        
+        # Randomly choose which player moves first (0 for A, 1 for B)
+        coin_flip = int(self.rng.choice([0, 1]))
         # move the player with the ball first  
         moving_order = [coin_flip, 1 - coin_flip]
+        reward_0, reward_1, done = 0, 0, False
         for moving_player in moving_order:
             reward_0, reward_1, done = self.__move_(moving_player, new_pos)
             if done:
-                break  # Stop moving if a goal is scored
-        return tuple(self.state), reward_0, reward_1, done  # Return the state and the player who scored
-
+                break
+        return tuple(self.state), reward_0, reward_1, done
+    
     def reset(self)-> list:
         """
         Reset the environment to its initial state.
@@ -64,7 +65,7 @@ class FootballEnv:
         """
         pos_A = (1, 3)
         pos_B = (2, 1)
-        posses = np.random.choice([0, 1])  # Randomly assign the ball to one of the players
+        posses = int(self.rng.choice([0, 1]))
         self.state = [pos_A, pos_B, posses]
         return self.state
 
