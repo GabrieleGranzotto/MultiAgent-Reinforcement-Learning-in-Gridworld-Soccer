@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+    \centering
+    \scriptsize
+    \caption{Evaluation over $10^5$ steps: Belief-Based JAL (Mean $\pm$ Std across seeds) vs. Littman~\cite{littman1994markov}.}
+    \label{tab:marl_results}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Algorithm / Regime}  & \textbf{Games ($n$)} & \textbf{Win A (\%)} \\
+        \midrule
+        % TODO: Fill with your aggregated multi-seed results
+        Belief JAL (vs. Random)      & 17341.8              & 99.24               \\
+        Belief JAL (Self-Play)       & 15023.8              &                     \\
+        \midrule
+        % Reference values from Littman (1994) [Lit94]
+        Minimax-Q (rand. learn)      & 6500                 & 99.3                \\
+        Minimax-Q (ident. learn)     & 7200                 & 99.3                \\
+        Independent-Q (rand. learn)  & 11300                & 99.4                \\
+        Independent-Q (ident. learn) & 8600                 & 99.5                \\
+        \bottomrule
+    \end{tabular}
+\end{table}

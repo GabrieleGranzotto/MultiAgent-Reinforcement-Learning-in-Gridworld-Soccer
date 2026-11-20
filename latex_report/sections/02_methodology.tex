@@ -1,0 +1,30 @@
+\section{Belief-Based Joint Action Learning}
+The tabular joint Q-function $Q_i(s, a_i, a_{-i})$ estimates the expected cumulative return for agent $i$ taking action $a_i$ in state $s$ while the opponent selects $a_{-i}$. Each agent maintains an empirical belief model $\hat{\pi}_{-i}(a_{-i} \mid s)$ over the opponent's action distribution in state $s$. Initializing state-action counts with a uniform prior $N_s(a_{-i}) = 1$ and incrementing $N_s(a_{-i}) \leftarrow N_s(a_{-i}) + 1$ upon observing $a_{-i}$, the belief is estimated as:
+$$
+    \hat{\pi}_{-i}(a_{-i} \mid s)
+    = \frac{N_s(a_{-i})}{\sum_{a' \in A_{-i}} N_s(a')}.
+$$
+The expected value of action $a_i$ in state $s$ is then:
+$$
+    \begin{aligned}
+        V_i(s, a_i)
+         & = \mathbb{E}_{a_{-i} \sim \hat{\pi}_{-i}}[Q_i(s, a_i, a_{-i})]           \\
+         & = \sum_{a_{-i}} \hat{\pi}_{-i}(a_{-i} \mid s) \cdot Q_i(s, a_i, a_{-i}).
+    \end{aligned}
+$$
+
+Action selection follows an $\epsilon$-greedy policy: with probability $1 - \epsilon$, the agent selects $\arg\max_{a_i} V_i(s, a_i)$ (breaking ties uniformly at random to prevent directional bias), and with probability $\epsilon$ it samples an action uniformly. After observing $(s, a_i, a_{-i}, r, s')$, the joint Q-table is updated via:
+$$
+    \begin{aligned}
+        Q_i(s, a_i, a_{-i}) \leftarrow{} & Q_i(s, a_i, a_{-i})                                              \\
+                                         & + \alpha \Bigl(r + \gamma_{\text{eff}} \max_{a_i'} V_i(s', a_i') \\
+                                         & \qquad{} - Q_i(s, a_i, a_{-i})\Bigr),
+    \end{aligned}
+$$
+where $\gamma_{\text{eff}} = 1.0$ during non-terminal transitions because $\gamma = 0.9$ is already enforced by the environment's $0.1$ per-step termination probability.
+
+Following~\cite{littman1994markov}, experiments were run across $5$ random seeds ($\{10, 20, 30, 42, 88\}$) with:
+\begin{itemize}[noitemsep, topsep=2pt, leftmargin=1.2em]
+    \item \textbf{Training:} $10^6$ steps, $\epsilon = 0.2$, $\alpha_0 = 1.0$, and exponential decay $\alpha_{t+1} = \alpha_t \cdot 10^{\log_{10}(0.01)/10^6} \approx \alpha_t \cdot 0.9999954$.
+    \item \textbf{Evaluation:} $10^5$ steps with greedy exploitation ($\epsilon = 0$) and frozen tables.
+\end{itemize}

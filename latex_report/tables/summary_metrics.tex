@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+    \centering
+    \scriptsize
+    \setlength{\tabcolsep}{4.5pt}
+    \caption{Evaluation over $10^5$ steps excluding draws (decisive games only): Belief-Based JAL (5-seed mean) compared with selected benchmarks from Littman~\cite{littman1994markov}.}
+    \label{tab:marl_results}
+    \begin{tabular}{lllcc}
+        \toprule
+        \textbf{Algorithm}                     & \textbf{Training} & \textbf{Test} & \textbf{Games} & \textbf{\% won} \\
+        \midrule
+        Minimax-Q~\cite{littman1994markov}     & Random            & Random        & 6500           & 99.3            \\
+        Minimax-Q~\cite{littman1994markov}     & Identical         & Q-best        & 4400           & 37.5            \\
+        \midrule
+        Independent-Q~\cite{littman1994markov} & Random            & Random        & 11300          & 99.4            \\
+        Independent-Q~\cite{littman1994markov} & Identical         & Q-best        & 1200           & 0.0             \\
+        \midrule
+        \textbf{Belief JAL (Ours)}             & Random            & Random        & \textbf{7323}  & \textbf{99.2}   \\
+        \textbf{Belief JAL (Ours)}             & Identical         & Identical     & \textbf{4975}  & \textbf{50.2}   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
